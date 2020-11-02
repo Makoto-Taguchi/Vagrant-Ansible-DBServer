@@ -1,0 +1,23 @@
+mysql_log_file: /var/log/mysqld.log
+mysql_user_name: eccube
+mysql_host: 192.168.56.31
+mysql_user_password: Zaq12wsx/
+mysql_database: eccube_db
+mysql_secure_installation_query: >
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_user_password }}';
+  DELETE FROM mysql.user WHERE User='';
+  DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+  DROP DATABASE IF EXISTS test;
+  DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+  FLUSH PRIVILEGES;
+error_log_file: /var/log/mysql_error.log
+general_log_file: /var/log/mysql_generalquery.log
+general_log_setting: |  
+  general_log=1
+  log_output=FILE
+  general_log_file=/var/log/mysql_generalquery.log
+char_code: |
+  character-set-server=utf8
+  [client]
+  default-character-set=utf8
+
