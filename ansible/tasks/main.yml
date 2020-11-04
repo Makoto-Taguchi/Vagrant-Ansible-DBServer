@@ -68,30 +68,21 @@
         mode: 0644
       when: log_file.stat.size == 0
 
-    - name: 一般クエリログの設定
-      blockinfile:
-        insertafter: '^log-error'
-        path: /etc/my.cnf
-        block: |
-          {{ general_log_setting }}
-      register: config_file
-
-    - name: エラーログの修正
+    - name: エラーログ設定のコメントアウト
       lineinfile:
         path: /etc/my.cnf
         state: present
         # backrefs=yes
         regexp: '^log-error='
-        line: 'log-error="{{ error_log_file }}"'
+        line: '# log-error=/var/log/mysql_error.log'
 
-     #- name: 文字コードの設定
-     # blockinfile:
-     #   insertafter: '^pid-file='
-     #   path: /etc/my.cnf
-     #   block: |
-     #     {{ item.char_code }}
-     # register: config_file
-     # with_items: "{{ mysql_my_cnf }}"
+    - name: 文字コードの設定
+      blockinfile:
+        insertafter: '^pid-file'
+        path: /etc/my.cnf
+        block: |
+          {{ setting_contents }}
+      register: config_file
 
     - name: MySQLデータベースの作成
       mysql_db:

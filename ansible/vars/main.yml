@@ -10,14 +10,18 @@ mysql_secure_installation_query: >
   DROP DATABASE IF EXISTS test;
   DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
   FLUSH PRIVILEGES;
-error_log_file: /var/log/mysql_error.log
 general_log_file: /var/log/mysql_generalquery.log
-general_log_setting: |  
+error_log_file: /var/log/mysql_error.log
+setting_contents: |  
+  # error log
+  log-error=/var/log/mysql_error.log
+  
+  # generalquery log  
   general_log=1
   log_output=FILE
   general_log_file=/var/log/mysql_generalquery.log
-char_code: |
+  
+  # character setting
   character-set-server=utf8
   [client]
   default-character-set=utf8
-
