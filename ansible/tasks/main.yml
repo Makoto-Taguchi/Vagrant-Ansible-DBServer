@@ -27,10 +27,10 @@
         rpm -ih http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
 
     - name: MySQLをインストール
-      yum: name={{item}}
-      with_items:
-        - MySQL-python
-        - mysql-community-server
+      yum:
+        name:
+          - MySQL-python
+          - mysql-community-server
 
     - name: check if mysql log file size is 0 or not
       stat: path={{ mysql_log_file }}
