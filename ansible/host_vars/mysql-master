@@ -1,2 +1,2 @@
 mysql_repl_role: master
-mysql_db_id: 1
+mysql_server_id: 1

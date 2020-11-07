@@ -20,8 +20,26 @@ setting_contents: |
   general_log=1
   log_output=FILE
   general_log_file=/var/log/mysql_generalquery.log
+
+  # binary log
+  log-bin
+
+  # for replication
+  server-id={{ mysql_server_id }}
+  gtid_mode=on
+  enforce-gtid-consistency
   
   # character setting
   character-set-server=utf8
   [client]
   default-character-set=utf8
+
+mysql_replication_user:
+  name: repl
+  host: 192.168.56.47
+  password: Zaq12wsx/
+
+mysql_replication_master:
+  host: 192.168.56.46
+  port: 3306
+
