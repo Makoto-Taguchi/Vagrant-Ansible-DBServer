@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: mysql-master:mysql-slave
   # sudo: yes
   become: true
   vars_files:
@@ -101,6 +101,8 @@
         password: "{{ mysql_user_password }}"
         priv: '{{ mysql_database }}.*:ALL'
         # state: present
+      when: >
+        mysql_repl_role == 'master'
 
     - name: MySQLを再起動
       service: name=mysqld state=restarted
