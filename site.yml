@@ -1,12 +1,8 @@
 ---
 - hosts: mysql-master
-  # sudo: yes
   roles:
     - common
-    # - mysql-repl
 
 - hosts: mysql-slave
-  # sudo: yes
   roles:
     - common
-    # - mysql-repl
