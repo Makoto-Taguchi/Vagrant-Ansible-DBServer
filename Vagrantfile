@@ -2,11 +2,10 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  
   # Ansible
   provision_config = {
-    :playbook => "ansible/tasks/main.yml",
-    :inventory_path => "ansible/hosts",
+    :playbook => "site.yml",
+    :inventory_path => "inventory/hosts",
     :verbose => "v"
   }
 
@@ -33,6 +32,8 @@ Vagrant.configure("2") do |config|
     vm02.vm.network :forwarded_port, id: "ssh", host: 2225, guest: 22
     vm02.vm.provision :ansible, provision_config.merge(:limit => "mysql-slave")
   end
+
+  # config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
 
   # Ansible
   # config.vm.provision "ansible" do |ansible|

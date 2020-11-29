@@ -1,3 +1,4 @@
+ansible_become: yes
 mysql_log_file: /var/log/mysqld.log
 mysql_user_name: eccube
 mysql_host: 192.168.56.31
@@ -12,11 +13,11 @@ mysql_secure_installation_query: >
   FLUSH PRIVILEGES;
 general_log_file: /var/log/mysql_generalquery.log
 error_log_file: /var/log/mysql_error.log
-setting_contents: |  
+setting_contents: |
   # error log
   log-error=/var/log/mysql_error.log
-  
-  # generalquery log  
+
+  # generalquery log
   general_log=1
   log_output=FILE
   general_log_file=/var/log/mysql_generalquery.log
@@ -28,7 +29,7 @@ setting_contents: |
   server-id={{ mysql_server_id }}
   gtid_mode=on
   enforce-gtid-consistency
-  
+
   # character setting
   character-set-server=utf8
   [client]

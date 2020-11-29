@@ -1,0 +1,143 @@
+---
+- name: SELinuxのDisable設定
+  selinux: state=disabled
+
+# ロケールの設定
+- name: add ja_JP.UTF-8 to locale
+  shell: localedef -f UTF-8 -i ja_JP /usr/lib/locale/ja_JP.UTF-8
+
+- name: set locale
+  shell: localectl set-locale LANG=ja_JP.utf8
+  when: ansible_env.LANG | default('') != 'ja_JP.UTF-8'
+
+- name: set timezone to Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
+
+# MySQL5.7
+- name: MySQL5.7のリポジトリを追加
+  command: >
+    rpm -ih http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
+- name: MySQLをインストール
+  yum:
+    name:
+      - MySQL-python
+      - mysql-community-server
+
+- name: check if mysql log file size is 0 or not
+  stat: path={{ mysql_log_file }}
+  register: log_file
+  changed_when: false
+
+- name: insecureでMySQLを初期化
+  command: mysqld --initialize-insecure --user=mysql
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: MySQLを起動
+  service: name=mysqld state=started enabled=yes
+
+- name: insecureからsecureモードに変更
+  command: mysql -u root -e "{{ mysql_secure_installation_query }}"
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: 一般クエリログファイルの作成
+  file:
+    path: "{{ general_log_file }}"
+    state: touch
+    owner: mysql
+    group: mysql
+    mode: 0644
+  when: log_file.stat.size == 0
+
+- name: エラーログファイルの作成
+  file:
+    path: "{{ error_log_file }}"
+    state: touch
+    owner: mysql
+    group: mysql
+    mode: 0644
+  when: log_file.stat.size == 0
+
+- name: エラーログ設定のコメントアウト
+  lineinfile:
+    path: /etc/my.cnf
+    state: present
+    # backrefs=yes
+    regexp: '^log-error='
+    line: '# log-error=/var/log/mysql_error.log'
+
+- name: 文字コードの設定
+  blockinfile:
+    insertafter: '^pid-file'
+    path: /etc/my.cnf
+    block: |
+      {{ setting_contents }}
+  register: config_file
+
+- name: MySQLデータベースの作成
+  mysql_db:
+    login_user: root
+    login_password: "{{ mysql_user_password }}"
+    name: "{{ mysql_database }}"
+    state: present
+    encoding: utf8
+
+- name: MySQLを再起動
+  service: name=mysqld state=restarted
+  # when: config_file.changed
+
+- name: Webサーバから接続用のユーザーを追加
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_user_password }}"
+    name: "{{ mysql_user_name }}"
+    host: "{{ mysql_host }}"
+    password: "{{ mysql_user_password }}"
+    priv: '{{ mysql_database }}.*:ALL'
+    state: present
+  when: >
+    mysql_repl_role == 'master'
+- name: レプリケーション用のユーザを追加
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_user_password }}"
+    name: "{{ mysql_replication_user.name }}"
+    host: "{{ mysql_replication_user.host }}"
+    password: "{{ mysql_replication_user.password }}"
+    priv: '*.*:ALL'
+    state: present
+  when: >
+    mysql_repl_role == 'master'
+- name: slaveサーバーからslaveの状態を取得してregisterでslaveという名前で保存
+  mysql_replication:
+    mode: getslave
+    login_user: root
+    login_password: "{{ mysql_user_password }}"
+  register: slave
+  when: >
+    mysql_repl_role == 'slave'
+- debug: msg={{ slave }}
+
+- name: change replication master to slave
+  mysql_replication:
+    mode: changemaster
+    login_user: "root"
+    login_password: "{{ mysql_user_password }}"
+    master_host: "{{ mysql_replication_master.host }}"
+    master_port: "{{ mysql_replication_master.port }}"
+    master_user: "{{ mysql_replication_user.name }}"
+    master_password: "{{ mysql_replication_user.password }}"
+    master_auto_position: 1
+  when: >
+    mysql_repl_role == 'slave'
+    and slave.Is_Slave is defined and not slave.Is_Slave
+- name: start replication to slave
+  mysql_replication:
+    mode: startslave
+    login_user: "root"
+    login_password: "{{ mysql_user_password }}"
+  when: >
+    mysql_repl_role == 'slave'
+    and slave.Is_Slave is defined and not slave.Is_Slave
